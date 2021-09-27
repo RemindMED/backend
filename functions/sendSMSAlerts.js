@@ -6,8 +6,6 @@ var settings = { timestampsInSnapshots: true }; // force Timestamp instead of Da
 firestore.settings(settings);
 const config = require("../config");
 
-console.log(config.twilio_accout_sid, config.twilio_auth_token);
-
 const Twilio = require('twilio');;
 
 
