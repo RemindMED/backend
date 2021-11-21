@@ -3,6 +3,11 @@
 const firebase = require("../db");
 const firestore = firebase.firestore();
 const trimFields = require("../functions/trimFields");
+const {
+	isValidPhone,
+	containsOnlyChars,
+	isValidPassword,
+} = require("../functions/validation");
 const auth = firebase.auth();
 
 const addDoctor = async (req, res, next) => {
@@ -21,19 +26,41 @@ const addDoctor = async (req, res, next) => {
 
 		let errores = "";
 
-		let camposFaltantes = "";
-		if (!nombre) camposFaltantes += "* Nombre(s)";
-		if (!apellido) camposFaltantes += "* Apellido(s)\n";
-		if (!email) camposFaltantes += "* Email\n";
-		if (!telefono) camposFaltantes += "* Numero telefonico\n";
-		if (!contrasena) camposFaltantes += "* Contrasena\n";
-		if (!conf_contrasena) camposFaltantes += "* Confirmar contrasena\n";
-		if (!especialidad) camposFaltantes += "* Especialidad\n";
+		// validacion de campos faltantes
+		let camposFaltantes = "<ul>";
+		if (!nombre) camposFaltantes += "<li> Nombre(s) </li>";
+		if (!apellido) camposFaltantes += "<li> Apellido(s) </li>";
+		if (!email) camposFaltantes += "<li> Email </li>";
+		if (!telefono) camposFaltantes += "<li> Numero telefonico </li>";
+		if (!contrasena) camposFaltantes += "<li> Contrasena </li>";
+		if (!conf_contrasena)
+			camposFaltantes += "<li> Confirmar contrasena </li>";
+		if (!especialidad) camposFaltantes += "<li> Especialidad </li>";
 
-		if (camposFaltantes) errores += "Campos faltantes:\n" + camposFaltantes;
+		if (camposFaltantes != "<ul>")
+			errores += "Campos faltantes:" + camposFaltantes + "</ul>";
 
+		// validacion de contenido dentro de campos
 		if (contrasena != conf_contrasena)
-			errores += "Las contrasenas no coinciden";
+			errores += "<li>Las contrasenas no coinciden </li>";
+
+		if (!isValidPhone(telefono))
+			errores +=
+				"<li> El <strong>Numero Telefonico no es valido.</strong> Debe contener unicamente un total de 10 digitos </li>";
+
+		if (!containsOnlyChars(nombre))
+			errores +=
+				"<li> El campo de <strong>Nombre(s)</strong> debe contener unicamente letras</li>";
+		if (!containsOnlyChars(apellido))
+			errores +=
+				"<li> El campo de <strong>Apellido(s)</strong> debe contener unicamente letras</li>";
+		if (!containsOnlyChars(especialidad))
+			errores +=
+				"<li> El campo de <strong>Especialidad</strong> debe contener unicamente letras</li>";
+
+		if (!isValidPassword(contrasena))
+			errores +=
+				"<li> La contrasena debe ser mayor a 6 caracteres. Ademas de tener que contar por lo menos con una Mayuscula y un Caracter especial.</li>";
 
 		if (errores) {
 			res.status(400).json(errores);
@@ -52,7 +79,7 @@ const addDoctor = async (req, res, next) => {
 			email,
 			telefono,
 			especialidad,
-      doctorId: newUser.uid,
+			doctorId: newUser.uid,
 		});
 		res.status(200).json({ doctorId: newUser.uid });
 	} catch (error) {

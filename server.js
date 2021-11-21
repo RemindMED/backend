@@ -19,10 +19,10 @@ app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(fileUpload());
 
-cron.schedule("* * * * *", function () {
-	console.log("rSending alerts");
-    sendSMSAlerts(60);
-});
+// cron.schedule("* * * * *", function () {
+// 	console.log("rSending alerts");
+//     sendSMSAlerts(60);
+// });
 
 
 app.use(
@@ -32,6 +32,6 @@ app.use(
 	appointmentRoutes.routes
 );
 
-app.listen(process.env.PORT || config.port || 3000, () =>
+app.listen(process.env.PORT || config.port || 8080, () =>
 	console.log("App is listening on url http://localhost:" + config.port)
 );
