@@ -14,9 +14,6 @@ async function sendSMSAlerts(gap) {
 	const nearAppointments = await getNearAppointments(gap);
 	const messages = await generateMessages(nearAppointments, gap);
 	await sendSMSNotifications(messages);
-
-	console.log(nearAppointments);
-    console.log(messages);
 }
 
 function addMinutes(date, minutes) {
@@ -115,7 +112,6 @@ async function generateMessages(appointments, gap) {
 		}
 	}
 
-    console.log("messages", messages);
 	return messages;
 }
 

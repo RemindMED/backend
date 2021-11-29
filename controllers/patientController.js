@@ -3,45 +3,18 @@
 const firebase = require("../db");
 const Patient = require("../models/patient");
 const trimFields = require("../functions/trimFields");
+const { validatePatientForm } = require("../functions/validation");
 const firestore = firebase.firestore();
 
 const addPatient = async (req, res, next) => {
 	try {
-		trimFields(req.body);
-
-		const {
-			nombre,
-			apellido,
-			email,
-			celular,
-			fechaNacimiento,
-			edad,
-			sexo,
-			doctorId,
-			foto,
-		} = req.body;
-
-		if (!doctorId) {
-			res
-				.status(400)
-				.json(
-					"No se puede realizar la comunicacion con el servidor. Doctor ID faltante."
-				);
+		const errores = validatePatientForm(req);
+		if (!req.body.doctorId) {
+			res.status(400).json(
+				"No se puede realizar la comunicacion con el servidor. Doctor ID faltante."
+			);
 			return;
 		}
-
-		let errores = "";
-		let camposFaltantes = "";
-		if (!nombre) camposFaltantes += "* Nombre";
-		if (!apellido) camposFaltantes += "* Apellido(s)\n";
-		if (!email) camposFaltantes += "* Email\n";
-		if (!celular) camposFaltantes += "* Celular\n";
-		if (!fechaNacimiento) camposFaltantes += "* Fecha de nacimientoa\n";
-		if (!edad) camposFaltantes += "* Edad\n";
-		if (!sexo) camposFaltantes += "* Sexo\n";
-
-		if (camposFaltantes) errores += "Campos faltantes:\n" + camposFaltantes;
-
 		if (errores) {
 			res.status(400).json(errores);
 			return;
@@ -77,7 +50,7 @@ const getPatients = async (req, res, next) => {
 				doc.data().estadoCivil,
 				doc.data().email,
 				doc.data().celular,
-                doc.data().foto,
+				doc.data().foto
 			);
 			patientsArray.push(patient);
 		});
@@ -106,39 +79,15 @@ const getPatient = async (req, res, next) => {
 const updatePatient = async (req, res, next) => {
 	try {
 		const id = req.query.id;
-		trimFields(req.body);
-
-		const {
-			nombre,
-			apellido,
-			email,
-			celular,
-			fechaNacimiento,
-			edad,
-			sexo,
-			foto,
-		} = req.body;
 
 		if (!id) {
-			res
-				.status(400)
-				.json(
-					"No se puede realizar la comunicacion con el servidor. Paciente ID faltante."
-				);
+			res.status(400).json(
+				"No se puede realizar la comunicacion con el servidor. Paciente ID faltante."
+			);
 			return;
 		}
 
-		let errores = "";
-		let camposFaltantes = "";
-		if (!nombre) camposFaltantes += "* Nombre";
-		if (!apellido) camposFaltantes += "* Apellido(s)\n";
-		if (!email) camposFaltantes += "* Email\n";
-		if (!celular) camposFaltantes += "* Celular\n";
-		if (!fechaNacimiento) camposFaltantes += "* Fecha de nacimientoa\n";
-		if (!edad) camposFaltantes += "* Edad\n";
-		if (!sexo) camposFaltantes += "* Sexo\n";
-
-		if (camposFaltantes) errores += "Campos faltantes:\n" + camposFaltantes;
+		const errores = validatePatientForm(req);
 
 		if (errores) {
 			res.status(400).json(errores);
@@ -156,8 +105,17 @@ const updatePatient = async (req, res, next) => {
 
 const deletePatient = async (req, res, next) => {
 	try {
-		const id = req.query.id;
-		await firestore.collection("Patients").doc(id).delete();
+		const pacienteId = req.query.id;
+		await firestore.collection("Patients").doc(pacienteId).delete();
+		var patient_appointments = firestore
+			.collection("Appointments")
+			.where("pacienteId", "==", pacienteId);
+			
+		patient_appointments.get().then(function (querySnapshot) {
+			querySnapshot.forEach(function (doc) {
+				doc.ref.delete();
+			});
+		});
 		res.json("Record deleted successfully");
 	} catch (error) {
 		res.status(400).json(error.message);
